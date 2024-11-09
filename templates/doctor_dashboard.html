@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Doctor Dashboard</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Patient ID</th>
+            <th>PDF Link</th>
+            <th>Upload Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for record in records %}
+        <tr>
+            <td>{{ record.patient_id }}</td>
+            <td><a href="{{ url_for('download_pdf', pdf_id=record.id) }}" target="_blank">View/Download PDF</a></td>
+            <td>{{ record.upload_date }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
