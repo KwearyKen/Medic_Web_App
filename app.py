@@ -18,7 +18,7 @@ login_manager.login_view = 'login'
 # Initialize Firebase
 cred = credentials.Certificate('firebase_credentials.json')
 firebase_admin.initialize_app(cred, {
-    'storageBucket': 'gs://medic-web-app-58ff7.firebasestorage.app'  # Replace with your actual bucket
+    'storageBucket': 'medic-web-app-58ff7.appspot.com'  # Replace with your actual bucket
 })
 db = firestore.client()
 bucket = storage.bucket()
@@ -95,14 +95,30 @@ def patient_dashboard():
         return redirect(url_for('login'))
     
     try:
+        # Fetch PDFs for the logged-in patient
         pdfs = db.collection('pdfs').where('patient_id', '==', current_user.id).stream()
-        pdf_list = [{'id': doc.id, 'pdf_url': doc.to_dict()['pdf_url'], 'upload_date': doc.to_dict()['upload_date']} for doc in pdfs]
+        
+        # Generate list of PDFs for the patient
+        pdf_list = []
+        for doc in pdfs:
+            pdf_data = doc.to_dict()
+            pdf_list.append({
+                'id': doc.id,
+                'pdf_url': pdf_data['pdf_url'],  # URL pointing to the PDF in Firebase Storage
+                'upload_date': pdf_data['upload_date']
+            })
+        
+        # If no PDFs are found for the patient, provide a placeholder message
+        if not pdf_list:
+            flash('No PDF records found.', 'info')
+        
         return render_template('patient_dashboard.html', pdfs=pdf_list)
+    
     except Exception as e:
         print(f"Error fetching PDFs: {e}")
         flash('Failed to retrieve PDFs.', 'danger')
         return redirect(url_for('login'))
-
+    
 # Route: Doctor Dashboard
 @app.route('/doctor_dashboard')
 @login_required
@@ -186,7 +202,8 @@ def download_pdf(pdf_id):
             return redirect(url_for('login'))
         
         pdf_data = pdf_record.to_dict()
-        
+        print(f"PDF Data: {pdf_data}")  # Debugging line
+
         # Access Control
         if current_user.role == 'patient' and pdf_data['patient_id'] != current_user.id:
             flash('Access denied.', 'danger')
@@ -197,9 +214,10 @@ def download_pdf(pdf_id):
             if not doctor_doc.exists or pdf_data['patient_id'] not in doctor_doc.to_dict().get('assigned_patients', []):
                 flash('Access denied.', 'danger')
                 return redirect(url_for('login'))
-        
+
         # Fetch PDF from Firebase Storage
         pdf_file_path = pdf_data['pdf_file']  # Path of the file stored in Firebase Storage
+        print(f"Fetching PDF from path: {pdf_file_path}")  # Debugging line
         blob = bucket.blob(pdf_file_path)
         pdf_content = blob.download_as_bytes()
         
