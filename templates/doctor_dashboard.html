@@ -13,10 +13,21 @@
         {% for record in records %}
         <tr>
             <td>{{ record.patient_id }}</td>
-            <td><a href="{{ url_for('download_pdf', pdf_id=record.id) }}" target="_blank">View/Download PDF</a></td>
+            <td>
+                {% if record.pdf_url %}
+                    <a href="{{ record.pdf_url }}" target="_blank">View PDF</a>
+                {% else %}
+                    <span>No PDFs available</span>
+                {% endif %}
+            </td>
             <td>{{ record.upload_date }}</td>
+            <td>
+                {% if record.message %}
+                    <span class="text-warning">{{ record.message }}</span>
+                {% endif %}
+            </td>
         </tr>
-        {% endfor %}
+    {% endfor %}
     </tbody>
 </table>
 {% endblock %}

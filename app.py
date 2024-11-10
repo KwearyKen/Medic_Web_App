@@ -4,6 +4,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore, auth, storage
 from io import BytesIO
 import os
+import ast
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -56,11 +57,6 @@ def login():
         try:
             # Firebase Authentication: Sign in user
             user = auth.get_user_by_email(email)
-            # Note: Firebase Admin SDK does not support password verification.
-            # Normally, password verification should be handled on the client side using Firebase Client SDK.
-            # For demonstration, we'll assume any existing user can log in.
-            # Implement proper authentication in a production environment.
-            
             user_data = db.collection('users').document(user.uid).get().to_dict()
             login_user(User(uid=user.uid, email=email, role=user_data['role']))
             flash('Logged in successfully.', 'success')
@@ -102,9 +98,6 @@ def patient_dashboard():
         pdfs = db.collection('pdfs').where('patient_id', '==', current_user.id).stream()
         pdf_list = [{'id': doc.id, 'pdf_url': doc.to_dict()['pdf_url'], 'upload_date': doc.to_dict()['upload_date']} for doc in pdfs]
         return render_template('patient_dashboard.html', pdfs=pdf_list)
-        # Debugging PDFs for patients
-        print("Fetching PDFs for patient ID:", patient_id)
-        pdfs = db.collection('pdfs').where('patient_id', '==', patient_id).stream()
     except Exception as e:
         print(f"Error fetching PDFs: {e}")
         flash('Failed to retrieve PDFs.', 'danger')
@@ -119,30 +112,51 @@ def doctor_dashboard():
         return redirect(url_for('login'))
     
     try:
-        # Assuming there's a field 'assigned_patients' as a list of patient IDs
+        # Fetch the doctor's document
         doctor_doc = db.collection('users').document(current_user.id).get()
         if not doctor_doc.exists:
             flash('Doctor not found.', 'danger')
             return redirect(url_for('login'))
         
-        assigned_patients = doctor_doc.to_dict().get('assigned_patients', [])
-         # Debugging: Print the assigned patients to check the data
+        # Retrieve assigned patients and safely convert the string to a list
+        assigned_patients_str = doctor_doc.to_dict().get('assigned_patients', '[]')
+        assigned_patients = ast.literal_eval(assigned_patients_str)
+        
+        # Debugging: Print the assigned patients to check the data
         print("Assigned patients:", assigned_patients)
+        
         records = []
         for patient_id in assigned_patients:
+            print(f"Fetching PDFs for patient ID: {patient_id}")  # Debugging line
             patient_pdfs = db.collection('pdfs').where('patient_id', '==', patient_id).stream()
-            for pdf in patient_pdfs:
+            
+            # Check if we got any PDFs for the patient
+            pdf_list = [pdf.to_dict() for pdf in patient_pdfs]
+            print(f"Found PDFs for patient {patient_id}: {pdf_list}")  # Debugging line
+            
+            # If no PDFs were found for this patient, add a placeholder message or handle it as needed
+            if not pdf_list:
                 records.append({
                     'patient_id': patient_id,
-                    'pdf_url': pdf.to_dict()['pdf_url'],
-                    'upload_date': pdf.to_dict()['upload_date']
+                    'pdf_url': None,
+                    'upload_date': None,
+                    'message': 'No PDFs available for this patient.'
                 })
+            else:
+                for pdf in pdf_list:
+                    records.append({
+                        'patient_id': patient_id,
+                        'pdf_url': pdf['pdf_url'],
+                        'upload_date': pdf['upload_date'],
+                        'message': None
+                    })
         
         return render_template('doctor_dashboard.html', records=records)
     except Exception as e:
         print(f"Error fetching doctor PDFs: {e}")
         flash('Failed to retrieve patient PDFs.', 'danger')
         return redirect(url_for('login'))
+
 
 # Route: Admin Dashboard
 @app.route('/admin_dashboard')
@@ -185,12 +199,13 @@ def download_pdf(pdf_id):
                 return redirect(url_for('login'))
         
         # Fetch PDF from Firebase Storage
-        blob = bucket.blob(pdf_data['pdf_file'])
+        pdf_file_path = pdf_data['pdf_file']  # Path of the file stored in Firebase Storage
+        blob = bucket.blob(pdf_file_path)
         pdf_content = blob.download_as_bytes()
         
         return send_file(
             BytesIO(pdf_content),
-            attachment_filename=pdf_data['pdf_file'],
+            attachment_filename=pdf_data['pdf_file'].split('/')[-1],  # Only use the filename as the attachment
             as_attachment=True,
             mimetype='application/pdf'
         )
