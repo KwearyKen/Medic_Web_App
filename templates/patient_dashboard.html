@@ -12,7 +12,7 @@
         {% for pdf in pdfs %}
         <tr>
             <td><a href="{{ url_for('download_pdf', pdf_id=pdf.id) }}" target="_blank">View/Download PDF</a></td>
-            <td>{{ pdf.upload_date }}</td>
+            <td>{{ pdf.upload_date.strftime('%Y-%m-%d %H:%M:%S') if pdf.upload_date else 'N/A' }}</td>
         </tr>
         {% endfor %}
     </tbody>

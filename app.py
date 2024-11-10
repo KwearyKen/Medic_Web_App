@@ -102,6 +102,9 @@ def patient_dashboard():
         pdfs = db.collection('pdfs').where('patient_id', '==', current_user.id).stream()
         pdf_list = [{'id': doc.id, 'pdf_url': doc.to_dict()['pdf_url'], 'upload_date': doc.to_dict()['upload_date']} for doc in pdfs]
         return render_template('patient_dashboard.html', pdfs=pdf_list)
+        # Debugging PDFs for patients
+        print("Fetching PDFs for patient ID:", patient_id)
+        pdfs = db.collection('pdfs').where('patient_id', '==', patient_id).stream()
     except Exception as e:
         print(f"Error fetching PDFs: {e}")
         flash('Failed to retrieve PDFs.', 'danger')
@@ -123,6 +126,8 @@ def doctor_dashboard():
             return redirect(url_for('login'))
         
         assigned_patients = doctor_doc.to_dict().get('assigned_patients', [])
+         # Debugging: Print the assigned patients to check the data
+        print("Assigned patients:", assigned_patients)
         records = []
         for patient_id in assigned_patients:
             patient_pdfs = db.collection('pdfs').where('patient_id', '==', patient_id).stream()
