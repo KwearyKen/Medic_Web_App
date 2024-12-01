@@ -10,7 +10,7 @@ from google.cloud.firestore_v1 import FieldFilter
 
 # Initialize Flask app
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'e5d3c8b16f7d8a5f96f2b79fa392b540'  # Replace with a secure key
+app.config['SECRET_KEY'] = 'firebase secret key'  # Replace with a secure key
 
 # Initialize Flask-Login
 login_manager = LoginManager()
@@ -18,9 +18,9 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 
 # Initialize Firebase
-cred = credentials.Certificate('firebase_credentials.json')
+cred = credentials.Certificate('firebase credential file here')
 firebase_admin.initialize_app(cred, {
-    'storageBucket': 'medic-web-app-58ff7.appspot.com'  # Ensure this matches your Firebase project
+    'storageBucket': 'firebase bucket here'  # Ensure this matches your Firebase project
 })
 db = firestore.client()
 bucket = storage.bucket()
