@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Edit User</h2>
+<form action="{{ url_for('edit_user', user_id=user_id) }}" method="post">
+    <div>
+        <label for="email">Email:</label>
+        <input type="email" name="email" id="email" value="{{ user.email }}" required>
+    </div>
+    <div>
+        <label for="password">New Password (leave blank to keep the same):</label>
+        <input type="password" name="password" id="password">
+    </div>
+    <button type="submit" class="btn btn-green">Update User</button>
+</form>
+{% endblock %}

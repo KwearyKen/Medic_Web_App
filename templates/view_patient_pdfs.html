@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>PDFs for Patient ID: {{ patient_id }}</h2>
+<table>
+    <thead>
+        <tr>
+            <th>PDF Link</th>
+            <th>Upload Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for pdf in pdfs %}
+        <tr>
+            <td>
+                {% if pdf.pdf_url %}
+                    <a href="{{ pdf.pdf_url }}" target="_blank" class="btn btn-green">View PDF</a>
+                {% endif %}
+            </td>
+            <td>{{ pdf.upload_date }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

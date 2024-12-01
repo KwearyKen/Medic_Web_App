@@ -1,0 +1,7 @@
+.\venv\Scripts\activate
+
+
+and then always rmb to deactivate -> deactivate
+
+
+rmb to run pip install -r requirements.txt

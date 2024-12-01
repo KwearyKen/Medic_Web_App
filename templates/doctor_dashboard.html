@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Doctor Dashboard</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Patient ID</th>
+            <th>Patient Email</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for patient in patients %}
+        <tr>
+            <td>{{ patient.id }}</td>
+            <td>{{ patient.email }}</td>
+            <td>
+                <a href="{{ url_for('view_patient_pdfs', patient_id=patient.id) }}" class="btn btn-green">View PDFs</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
